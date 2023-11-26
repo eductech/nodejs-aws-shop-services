@@ -1,16 +1,19 @@
 import { APIGatewayEvent } from 'aws-lambda';
-import { products } from './mocks';
-import { createResponse } from './utils';
+import { createResponse, query } from './utils';
 
 const handler = async (event: APIGatewayEvent) => {
   try {
+    console.log('>>> getProductById', event);
+
     const { productId } = event.pathParameters || {};
     if (!productId) return createResponse({ statusCode: 404, body: { message: 'product not found' }});
 
-    const product = products.find(({ id }) => id === productId);
+    const product = await query('id', productId, process.env.PRODUCT_TABLE_NAME!);
     if (!product) return createResponse({ statusCode: 404, body: { message: 'product not found' }});
 
-    return createResponse({ statusCode: 200, body: product });
+    const stock = await query('product_id', productId, process.env.STOCK_TABLE_NAME!);
+
+    return createResponse({ statusCode: 200, body: { ...product, count: stock?.count || 0 } });
   } catch (err: any) {
     return createResponse({ statusCode: 500, body: { message: err.message || '' }});
   }

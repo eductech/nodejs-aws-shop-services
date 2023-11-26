@@ -1,7 +1,7 @@
 openapi: "3.0.1"
 info:
   title: "ProductsApiGateway"
-  version: "2023-11-18 20:14:50UTC"
+  version: "2023-11-26 18:51:16UTC"
 servers:
 - url: "https://xv4rj7n3m7.execute-api.eu-north-1.amazonaws.com/{basePath}"
   variables:
@@ -18,19 +18,46 @@ paths:
   /products:
     get:
       responses:
-        default:
-          description: "Default response for GET /products"
+        "200":
+          description: Success
+        "500":
+          description: Internal server error
       x-amazon-apigateway-integration:
         payloadFormatVersion: "2.0"
         type: "aws_proxy"
         httpMethod: "POST"
         uri: "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:064281145107:function:getProductsList/invocations"
         connectionType: "INTERNET"
+    post:
+      requestBody:
+        description: New product with stocks
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewProduct"
+      responses:
+        "200":
+          description: Success
+        "400":
+          description: Validation error
+        "500":
+          description: Internal server error
+      x-amazon-apigateway-integration:
+        payloadFormatVersion: "2.0"
+        type: "aws_proxy"
+        httpMethod: "POST"
+        uri: "arn:aws:apigateway:eu-north-1:lambda:path/2015-03-31/functions/arn:aws:lambda:eu-north-1:064281145107:function:createProduct/invocations"
+        connectionType: "INTERNET"
   /products/{productId}:
     get:
       responses:
-        default:
-          description: "Default response for GET /products/{productId}"
+        "200":
+          description: Success
+        "404":
+          description: Not found
+        "500":
+          description: Internal server error
       x-amazon-apigateway-integration:
         payloadFormatVersion: "2.0"
         type: "aws_proxy"
@@ -44,6 +71,23 @@ paths:
       required: true
       schema:
         type: "string"
+components:
+  schemas:
+    NewProduct:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "SAMSUNG TV QLED123YM"
+        description:
+          type: string
+          example: "Better then LG"
+        price:
+          type: integer
+          example: 2000
+        count:
+          type: integer
+          example: 100
 x-amazon-apigateway-cors:
   allowMethods:
   - "*"
