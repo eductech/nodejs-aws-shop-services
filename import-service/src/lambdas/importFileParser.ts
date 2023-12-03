@@ -5,6 +5,7 @@ import {
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { s3Client } from "./utils";
+// @ts-ignore
 import csv from "csv-parser";
 import { Readable } from "stream";
 
