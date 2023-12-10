@@ -1,5 +1,5 @@
 import { APIGatewayEvent } from 'aws-lambda';
-import { createResponse, queryAll } from './utils';
+import { createResponse, queryAll } from '../utils';
 
 const handler = async (
   event: APIGatewayEvent

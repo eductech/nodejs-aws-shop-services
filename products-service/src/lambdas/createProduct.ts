@@ -1,7 +1,7 @@
 import { APIGatewayEvent } from 'aws-lambda';
 import { randomUUID } from 'crypto';
 import { NewProduct } from '../schemas';
-import { createProduct, createResponse } from './utils';
+import { createProduct, createResponse } from '../utils';
 
 export const handler = async (event: APIGatewayEvent) => {
   try {
