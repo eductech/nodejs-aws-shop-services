@@ -8,6 +8,7 @@ import * as s3notifications from 'aws-cdk-lib/aws-s3-notifications';
 import * as apiGateway from '@aws-cdk/aws-apigatewayv2-alpha';
 import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import { Cors } from 'aws-cdk-lib/aws-apigateway';
+import * as sqs from 'aws-cdk-lib/aws-sqs';
 
 const BASE_URL = 'import';
 
@@ -35,10 +36,13 @@ const bucket = new s3.Bucket(stack, 'ImportServiceBucket', {
   blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
 });
 
+const catalogItemsQueue = sqs.Queue.fromQueueArn(stack, 'ProductQueue', process.env.CATALOG_ITEMS_QUEUE_ARN!);
+
 const createLambda = (name: string, props: NodejsFunctionProps ) => new NodejsFunction(stack, name, {
   runtime: lambda.Runtime.NODEJS_18_X,
   environment: {
     IMPORT_BUCKET_NAME: bucket.bucketName,
+    CATALOG_ITEMS_QUEUE: catalogItemsQueue.queueUrl,
   },
   ...props,
 });
@@ -55,6 +59,7 @@ const importFileParser = createLambda('ImportFileParserLambda', {
 });
 bucket.grantReadWrite(importFileParser);
 bucket.grantDelete(importFileParser);
+catalogItemsQueue.grantSendMessages(importFileParser);
 
 bucket.addEventNotification(s3.EventType.OBJECT_CREATED, new s3notifications.LambdaDestination(importFileParser), {
   prefix: 'uploaded',
