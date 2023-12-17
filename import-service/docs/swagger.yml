@@ -18,6 +18,8 @@ paths:
   /import:
     get:
       summary: Get signed file import endpoint
+      security:
+        - Auth: []
       responses:
         "200":
           description: Success
@@ -51,6 +53,10 @@ x-amazon-apigateway-cors:
   - "*"
 x-amazon-apigateway-importexport-version: "1.0"
 components:
+  securitySchemes:
+    Auth:
+      type: http
+      scheme: basic
   schemas:
     NewSignedUrl:
       type: object
