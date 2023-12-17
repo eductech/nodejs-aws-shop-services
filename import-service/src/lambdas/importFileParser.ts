@@ -8,6 +8,11 @@ import { s3Client } from "./utils";
 // @ts-ignore
 import csv from "csv-parser";
 import { Readable } from "stream";
+import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
+
+const client = new SQSClient({
+  region: "eu-north-1",
+});
 
 const move = async ({
   bucket,
@@ -49,10 +54,13 @@ export const handler = async (event: S3Event) => {
     );
     if (!stream) return;
 
+    const messages: object[] = [];
     await new Promise<void>((resolve, reject) => {
       (stream as Readable)
         .pipe(csv())
-        .on('data', (data: any) => console.log(data))
+        .on("data", (data: object) => {
+          messages.push(data);
+        })
         .on("end", async () => {
           await move({
             from: fileName,
@@ -66,6 +74,17 @@ export const handler = async (event: S3Event) => {
           reject(error);
         });
     });
+
+    await Promise.all(
+      messages.map((message) => {
+        return client.send(
+          new SendMessageCommand({
+            QueueUrl: process.env.CATALOG_ITEMS_QUEUE!,
+            MessageBody: JSON.stringify(message),
+          })
+        );
+      })
+    );
     console.log("parsing succeed");
   } catch (err: any) {
     console.log("parsing error", err);

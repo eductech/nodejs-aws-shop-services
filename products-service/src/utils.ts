@@ -1,5 +1,6 @@
 import { marshall, unmarshall } from '@aws-sdk/util-dynamodb';
 import { DynamoDBClient, ScanCommand, TransactWriteItemsCommand, QueryCommand } from '@aws-sdk/client-dynamodb';
+import { SQSRecord } from 'aws-lambda';
 
 const REGION = 'eu-north-1';
 
@@ -71,4 +72,27 @@ const createProduct = async (
   return { product, stock };
 }
 
-export { createResponse, query, queryAll, createProduct };
+const parseRecord = (record: SQSRecord) => {
+  const { messageId, body } = record;
+  const {
+    title = '',
+    description = '',
+    price = 0,
+    count = 0
+  } = JSON.parse(body);
+
+  return [
+    {
+      id: messageId,
+      title,
+      description,
+      price: Number(price),
+    },
+    {
+      product_id: messageId,
+      count: Number(count),
+    },
+  ];
+}
+
+export { createResponse, query, queryAll, createProduct, parseRecord };
