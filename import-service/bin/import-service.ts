@@ -9,6 +9,7 @@ import * as apiGateway from '@aws-cdk/aws-apigatewayv2-alpha';
 import { HttpLambdaIntegration } from '@aws-cdk/aws-apigatewayv2-integrations-alpha';
 import { Cors } from 'aws-cdk-lib/aws-apigateway';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
+import { HttpLambdaAuthorizer, HttpLambdaResponseType } from '@aws-cdk/aws-apigatewayv2-authorizers-alpha';
 
 const BASE_URL = 'import';
 
@@ -73,10 +74,25 @@ const api = new apiGateway.HttpApi(stack, 'ImportApiGateway', {
   },
 });
 
+const basicAuthorizer = lambda.Function.fromFunctionArn(stack, 'BasicAuthorizerLambda', process.env.AUTHORIZER_LAMBDA_ARN!);
+
+const httpLambdaAuthorizer = new HttpLambdaAuthorizer('HttpLambdaAuthorizer', basicAuthorizer, {
+  responseTypes: [HttpLambdaResponseType.IAM],
+  resultsCacheTtl: cdk.Duration.seconds(0),
+});
+
+new lambda.CfnPermission(stack, 'LambdaAuthorizerPermission', {
+  action: 'lambda:InvokeFunction',
+  functionName: basicAuthorizer.functionName,
+  principal: 'apigateway.amazonaws.com',
+  sourceAccount: stack.account,
+});
+
 api.addRoutes({
   path: `/${BASE_URL}`,
   methods: [apiGateway.HttpMethod.GET],
-  integration: new HttpLambdaIntegration('ImportProductsFileIntegration', importProductsFile)
+  integration: new HttpLambdaIntegration('ImportProductsFileIntegration', importProductsFile),
+  authorizer: httpLambdaAuthorizer,
 });
 
 new cdk.CfnOutput(stack, 'ApiGatewayUrl', {
