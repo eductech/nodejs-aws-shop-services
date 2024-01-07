@@ -14,6 +14,7 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.465.0",
     "@aws-sdk/util-dynamodb": "^3.465.0",
+    "@nestjs/cli": "^10.2.1",
     "aws-cdk": "^2.110.1",
     "joi": "^17.11.0"
   }
