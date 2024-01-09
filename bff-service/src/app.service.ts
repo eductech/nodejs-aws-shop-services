@@ -23,7 +23,10 @@ export class AppService {
     service: string,
     request: Request,
   ): Promise<ServiceResponse> {
-    const { method, headers, body, originalUrl } = request;
+    const { method, headers, body, originalUrl: requestOriginalUrl } = request;
+    const originalUrl = requestOriginalUrl.slice(
+      requestOriginalUrl.search(service) + service.length,
+    );
     const serviceUrl = process.env[service];
 
     if (!serviceUrl) {
@@ -70,7 +73,7 @@ export class AppService {
         await this.cacheManager.set(originalUrl, result);
       }
 
-      return result;
+      return { data: response.data, status: response.status, headers: {} };
     } catch (e) {
       if (e.response) {
         const result = {
